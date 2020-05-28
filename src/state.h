@@ -10,13 +10,28 @@
 
 #define MINION_HP   4
 #define MINION_RAD 12
+#define MINION_VISION 300
+
 #define BRUTE_HP   12
 #define BRUTE_RAD  16
+#define BRUTE_SPEED 3
+#define BRUTE_VISION 200
+
+#define CLYDE_HP   12//TORPE
+#define CLYDE_RAD  12
+#define INKY_HP    12//COBARDE
+#define INKY_RAD   12
+#define PINKY_HP   12//RAPIDO
+#define PINKY_RAD  12
+#define BLINKY_HP  12//AGRESIVO
+#define BLINKY_RAD 12
+#define GHOST_VISION 200
+#define GHOST_SPEED 2
+#define PINKY_SPEED 3.5
 
 #define BULLET_DMG 3
 #define BULLET_SPEED 16
 #define BULLET_RAD   5
-
 
 // ==== PLAYER DEFINITION
 typedef struct {
@@ -26,7 +41,7 @@ typedef struct {
 } player;
 
 // ==== ENEMY DEFINITION
-typedef enum {MINION=0, BRUTE=1} enemykind;
+typedef enum {MINION=0, BRUTE=1, CLYDE=2, INKY=3, PINKY=4,BLINKY=5} enemykind;
 
 typedef struct {
     entity ent;

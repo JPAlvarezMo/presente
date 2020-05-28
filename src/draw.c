@@ -45,6 +45,14 @@ void draw_state(const level *lvl, const state *sta){
         // Draw a circle with the radius of the entity, color depends on the enemy type
         if(sta->enemies[i].kind == MINION){
             DrawCircleV(vec,ent.rad,YELLOW);
+        }else if(sta->enemies[i].kind == CLYDE){
+            DrawCircleV(vec,ent.rad,ORANGE);
+        }else if(sta->enemies[i].kind == INKY){
+            DrawCircleV(vec,ent.rad,BLACK);
+        }else if(sta->enemies[i].kind == PINKY){
+            DrawCircleV(vec,ent.rad,PINK);
+        }else if(sta->enemies[i].kind == BLINKY){
+            DrawCircleV(vec,ent.rad,PURPLE);
         }else{
             DrawCircleV(vec,ent.rad,RED);
         }

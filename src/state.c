@@ -25,7 +25,6 @@ state *state_new(){
 }
 
 void state_update(level *lvl, state *sta){
-
     // == Update player speed according to buttons
     // (mov_x,mov_y) is a vector that represents the position of the analog control
     float mov_x = 0;
@@ -45,6 +44,97 @@ void state_update(level *lvl, state *sta){
         sta->pla.ent.vx = mov_x/mov_norm * PLAYER_SPEED;
         sta->pla.ent.vy = mov_y/mov_norm * PLAYER_SPEED;
     }
+    
+    // update enemies speed
+    for(int e=0;e<sta->n_enemies;e++){
+        //define la distancia entre el enemigo y el jugador
+        float distance_x=sta->pla.ent.x-sta->enemies[e].ent.x;
+        float distance_y=sta->pla.ent.y-sta->enemies[e].ent.y;
+        float raiz=sqrt(distance_x*distance_x+distance_y*distance_y);
+        //Cada enemigo se mueve de una manera diferente
+        if((sta->enemies[e].kind)==0){
+            //comprueba si el jugador esta dentro del rango de vision del enemigo
+            if(raiz<=MINION_VISION){
+                //segun la distancia entre el enemigo y el jugador se define la velocidad de movimiento
+                if(raiz>100){
+                    sta->enemies[e].ent.vx = (distance_x/raiz) * 3.5;
+                    sta->enemies[e].ent.vy = (distance_y/raiz) * 3.5;
+                    }else{
+                        sta->enemies[e].ent.vx = (distance_x/raiz) * 2;
+                        sta->enemies[e].ent.vy = (distance_y/raiz) * 2;
+                }
+                }else{
+                sta->enemies[e].ent.vx *=0.9;
+                sta->enemies[e].ent.vy *=0.9;
+                }
+        }else if(sta->enemies[e].kind==1){
+            //Enemigo que se mueve en linea recta en direccion al jugador cuando lo detecta
+            if(sta->enemies[e].ent.vx == 0 && sta->enemies[e].ent.vy == 0&&raiz<=BRUTE_VISION){
+                //Si el enemigo esta quieto y detecta al jugador comienza a moverse
+                sta->enemies[e].ent.px=sta->pla.ent.x;
+                sta->enemies[e].ent.py=sta->pla.ent.y;
+                float distance_x=sta->enemies[e].ent.px-sta->enemies[e].ent.x;
+                float distance_y=sta->enemies[e].ent.py-sta->enemies[e].ent.y;
+                float raiz=sqrt(distance_x*distance_x+distance_y*distance_y);
+                sta->enemies[e].ent.vx = (distance_x/raiz) * BRUTE_SPEED;
+                sta->enemies[e].ent.vy = (distance_y/raiz) * BRUTE_SPEED;
+            }
+            float distance_x=sta->enemies[e].ent.px-sta->enemies[e].ent.x;
+            float distance_y=sta->enemies[e].ent.py-sta->enemies[e].ent.y;
+            float raiz=sqrt(distance_x*distance_x+distance_y*distance_y);
+            if(raiz<10){
+                //cuando se acerca lo suficiente a la posicion detectada se detiene
+                sta->enemies[e].ent.vx *=0;
+                sta->enemies[e].ent.vy *=0;
+            }
+        }else if(sta->enemies[e].kind==2){
+            //Un enemigo que se aleja o acerca al jugador segun la distancia a la que se encuentre
+            if(raiz==300||raiz==200||raiz==100){
+                sta->enemies[e].ent.vx = 0;
+                sta->enemies[e].ent.vy = 0;
+            }else if(raiz>300){
+                sta->enemies[e].ent.vx = (distance_x/raiz) * GHOST_SPEED;
+                sta->enemies[e].ent.vy = (distance_y/raiz) * GHOST_SPEED;
+            }else if(raiz>200){
+                sta->enemies[e].ent.vx = (distance_x/raiz) * -GHOST_SPEED;
+                sta->enemies[e].ent.vy = (distance_y/raiz) * -GHOST_SPEED;
+            }else if(raiz>100){
+                sta->enemies[e].ent.vx = (distance_x/raiz) * GHOST_SPEED;
+                sta->enemies[e].ent.vy = (distance_y/raiz) * GHOST_SPEED;
+            }else{
+                sta->enemies[e].ent.vx = (distance_x/raiz) * -GHOST_SPEED;
+                sta->enemies[e].ent.vy = (distance_y/raiz) * -GHOST_SPEED;
+            }
+        }else if(sta->enemies[e].kind==3){
+            //un enemigo que se aleja del jugador cuando este entra en su rango de vision
+            if(raiz<=GHOST_VISION){
+                sta->enemies[e].ent.vx = -(distance_x/raiz) * GHOST_SPEED;
+                sta->enemies[e].ent.vy = -(distance_y/raiz) * GHOST_SPEED;
+            }else{
+                sta->enemies[e].ent.vx *=0;
+                sta->enemies[e].ent.vy *=0;
+            }
+        }else if(sta->enemies[e].kind==4){
+            //un enemigo mas rapido que los demas
+            if(raiz<=GHOST_VISION){
+                sta->enemies[e].ent.vx = (distance_x/raiz) * PINKY_SPEED;
+                sta->enemies[e].ent.vy = (distance_y/raiz) * PINKY_SPEED;
+            }else{
+            sta->enemies[e].ent.vx *=0;
+            sta->enemies[e].ent.vy *=0;
+            }
+        }else{
+            //un enemigo que persigue al jugador sin importar la distancia
+            sta->enemies[e].ent.vx = (distance_x/raiz) * GHOST_SPEED;
+            sta->enemies[e].ent.vy = (distance_y/raiz) * GHOST_SPEED;
+        }
+        int col = entity_collision(&sta->pla.ent,&sta->enemies[e].ent);
+        if (col&&sta->enemies[e].kind!=3&&sta->enemies[e].kind!=1){
+            sta->enemies[e].ent.vx *=0.0;
+            sta->enemies[e].ent.vy *=0.0;
+        }
+    }
+    //*
 
     // == Make the player shoot
     // Lower the player's cooldown by 1
@@ -133,6 +223,7 @@ void state_update(level *lvl, state *sta){
 
 void state_populate_random(level *lvl, state *sta, int n_enemies){
     assert(n_enemies<=MAX_ENEMIES);
+    int c=0;//contador de enemigos especiales
     while(sta->n_enemies<n_enemies){
         // Until an empty cell is found, Las Vegas algorithm approach.
         while(1){
@@ -153,7 +244,28 @@ void state_populate_random(level *lvl, state *sta, int n_enemies){
                 new_enemy->ent.y = (posy+0.5)*TILE_SIZE;
                 // Pick an enemy tipe and set variables accordingly
                 int brute = rand()%4==0; // brute has 1/4 chance.
-                if(brute){
+                //siempre se incluira 1 de cada enemigo especial en el nivel
+                if (c==0){
+                    new_enemy->kind   = CLYDE;
+                    new_enemy->ent.hp = CLYDE_HP;
+                    new_enemy->ent.rad = CLYDE_RAD;
+                    c+=1;
+                }else if (c==1){
+                    new_enemy->kind   = INKY;
+                    new_enemy->ent.hp = INKY_HP;
+                    new_enemy->ent.rad = INKY_RAD;
+                    c+=1;
+                }else if (c==2){
+                    new_enemy->kind   = PINKY;
+                    new_enemy->ent.hp = PINKY_HP;
+                    new_enemy->ent.rad = PINKY_RAD;
+                    c+=1;
+                }else if (c==3){
+                    new_enemy->kind   = BLINKY;
+                    new_enemy->ent.hp = BLINKY_HP;
+                    new_enemy->ent.rad = BLINKY_RAD;
+                    c+=1;
+                }else if(brute){
                     new_enemy->kind   = BRUTE;
                     new_enemy->ent.hp = BRUTE_HP;
                     new_enemy->ent.rad = BRUTE_RAD;

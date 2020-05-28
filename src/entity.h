@@ -15,6 +15,8 @@ typedef struct {
     int hp;
     // if it is dead or not
     int dead;
+    // Posicion del donde se vio al jugador y estado del seguimiento
+    float px,py;
 } entity;
 
 /* Updates the entity position according to its velocity.
@@ -22,6 +24,8 @@ It also should perform collision checking with the level cells.
 Retrieves 1 if there is a collision.
 */
 int entity_physics(const level *lvl, entity *ent);
+
+int entity_walls(const level *lvl, entity *ent,int a,int b);
 
 // Checks if two entities are colliding, retrieving 1 in that case.
 int entity_collision(const entity *ent1, const entity *ent2);
